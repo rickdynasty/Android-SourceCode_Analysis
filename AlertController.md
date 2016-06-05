@@ -27,7 +27,7 @@ AlertController并非一个控件类，很少单独使用，一般是结合Alert
 
 ...
 
-上面界面显示的内容就是由AlertController来控制的，截图来源[Android-burgeon-project](https://github.com/rickdynasty/Android-burgeon-project)，里面有很多案例；使用者也可以自己随意定义显示内容，就像上面的**带进度条对话框**。
+上面界面显示的内容就是由AlertController来控制的，截图来源[Android-burgeon-project](https://github.com/rickdynasty/Android-burgeon-project)，里面有很多案例；开发者也可以自定义显示视图，就像上面的**带进度条对话框**里面的进度条视图。
 
 AlertDialog创建案例:
 
@@ -71,10 +71,10 @@ public class AlertDialog extends Dialog implements DialogInterface {
 
 	....
 ```
-AlertDialog作为Android典型的创建者模式案例，也**只是对AlertController进行了一次很简单的包装**，内部类Builder也是对AlertController.AlertParams进行了一次简单的包装，然后通过这一层包装向外提供相应的api接口：
+AlertDialog作为Android典型的创建者模式案例，也**只是对AlertController进行了一次很简单的包装**，内部类Builder也是对AlertController.AlertParams进行了一次简单的包装，然后通过这一层包装向外提供相应的api接口，AlertDialog内部结构图：
 ![AlertDialog内部结构](https://raw.githubusercontent.com/rickdynasty/Android-SourceCode_Analysis/4fefd6c6e69f0b6530055080ceb07467ccc43afd/res/AlertDialog%E5%86%85%E9%83%A8%E7%BB%93%E6%9E%84.png)
 
->从上面的结构图可以很清晰的看到AlertDialog对Dialog扩展了一个AlertController mAlert；成员，而提供的一系列的公开 api接口都被直接或者间接的转向了这个成员mAlert对应的行为，`这里主要分析AlertController的源码就不展开细讲AlertDialog的每一个api`。
+>从上面的结构图可以很清晰的看到AlertDialog对Dialog扩展了一个AlertController mAlert；成员，而提供的一系列的公开 api接口都被直接或者间接的转向了这个成员mAlert对应的行为，内部类Builder也是一样的：转向了内部成员AlertController.AlertParams P，`这里主要分析AlertController的源码就不展开细讲AlertDialog的每一个api`，这里面提供的api也很简单就的将行为转向内部成员的行为，部分会附加做一些相应处理，比如涉及到主题或者父类相应的接口调用。
 >
 >通过上面AlertDialog效果图和AlertDialog的类结构图基本也可以想到AlertController提供了那些能力，^_^不急下面会一步步进行分析。
 
@@ -601,7 +601,7 @@ java
 apply函数里面仅仅是将AlertParams里面的数据通过AlertController的api调用设置到了AlertController里面。
 
 
-- Step8：显示对话框 show()**[AlertDialog::Builder::show()]**
+- Step8：显示对话框 show()**[AlertDialog.Builder.show()]**
 
 ```
 java
@@ -628,7 +628,7 @@ java
 ```
 在OnCreate里面执行了一个很重要的步骤：mAlert.installContent();完成对AlertController的显示内容准备工作。
 
-- Step9：准备显示内容 AlertController::installContent()
+- Step9：准备显示内容 AlertController.installContent()
 
 >整个过程也是通过这一步完成显示内容view的Inflater和view的排版调整，之前的都是数据的准备。
 
@@ -695,7 +695,7 @@ java
         mAlert.setView(view, viewSpacingLeft, viewSpacingTop, viewSpacingRight, viewSpacingBottom);
     }
 
-	// AlertDialog.java - AlertDialog::Builder
+	// AlertDialog.java - AlertDialog.Builder
         public Builder setView(int layoutResId) {
             P.mView = null;
             P.mViewLayoutResId = layoutResId;
