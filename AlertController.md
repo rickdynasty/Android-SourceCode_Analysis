@@ -74,9 +74,9 @@ public class AlertDialog extends Dialog implements DialogInterface {
 AlertDialog作为Android典型的创建者模式案例，也**只是对AlertController进行了一次很简单的包装**，内部类Builder也是对AlertController.AlertParams进行了一次简单的包装，然后通过这一层包装向外提供相应的api接口：
 ![AlertDialog内部结构](https://raw.githubusercontent.com/rickdynasty/Android-SourceCode_Analysis/4fefd6c6e69f0b6530055080ceb07467ccc43afd/res/AlertDialog%E5%86%85%E9%83%A8%E7%BB%93%E6%9E%84.png)
 
->从上面的结构图可以很清晰的看到AlertDialog提供了哪些api接口，`这里主要分析AlertController的源码就不展开细讲AlertDialog的每一个api`。
+>从上面的结构图可以很清晰的看到AlertDialog对Dialog扩展了一个AlertController mAlert；成员，而提供的一系列的公开 api接口都被直接或者间接的转向了这个成员mAlert对应的行为，`这里主要分析AlertController的源码就不展开细讲AlertDialog的每一个api`。
 >
->通过上面效果图&AlertDialog提供的api大概可以想到AlertController提供了那些能力，^_^不急下面会一步步进行分析。
+>通过上面AlertDialog效果图和AlertDialog的类结构图基本也可以想到AlertController提供了那些能力，^_^不急下面会一步步进行分析。
 
 ## 3. AlertController
 
@@ -158,7 +158,7 @@ public class AlertController {
 	...
 ```
 
-AlertController有一个很重要的内部类，上面也提到过:AlertParams.通过名字也很容易知道是AlertController的属性管理。
+AlertController有一个很重要的内部类，上面也提到过:AlertParams.通过名字比较容易知道是AlertController的属性管理。先看一下AlertParams的属性：
 
 ```
 java
@@ -208,6 +208,7 @@ java
 ```
 
 ### 3.2 AlertDialogLayout - alert_dialog_holo.xml
+
 从上面的属性成员来看AlertParams是对AlertController的显示&回调的属性进行细分管理，这里暂不详细讲解每一个成员，下面的使用场景会讲解，先来讲解一个很重要的布局文件：在AlertController属性里面的很多Layout里面有一个非常重要的Layout：**mAlertDialogLayout**，这个布局文件直接决定了界面的显示风格。这个布局文件是通过主题进行配置的：alert_dialog_holo.xml,这个配置主题是：android:Theme.Holo，细心的玩家就知道通过ADT创建出来的project默认theme都是继承自**android:Theme.Holo.Light**.
 
 先来看一下这个布局文件：
@@ -343,13 +344,14 @@ java
      </LinearLayout>
 </LinearLayout>
 ```
-alert_dialog_holo.xml自上而下一共分了四个面板：topPanel、contentPanel、customPanel、buttonPanel。
+alert_dialog_holo.xml自上而下一共分了四个面板：topPanel、contentPanel、customPanel、buttonPanel。每一个面板持有的内容都是AlertController在维护的对象,比如：图标、标题、显示的文本内容、自定义视图以及底部的按钮等。
 
-从构造开始逐步讲解一下AlertController.
 
 ### 3.3 AlertController - AlertDialog创建过程
 
-那就从开篇举的AlertDialog创建案例,一步步分析AlertController~
+下就结合开篇举的AlertDialog创建案例，逐步讲解一下AlertController~
+
+AlertDialog创建案例：
 
 ```
 java
@@ -364,7 +366,9 @@ AlertDialog.Builder(AlertDialogSamples.this)
 
 ```
 
-Step1：Builder构造
+
+
+- Step1：AlertDialog.Builder构造
 
 ```
 java
@@ -378,7 +382,7 @@ java
 
 ```
 
-Step2：AlertParams构造
+- Step2：AlertController.AlertParams构造
 
 ```
 java
@@ -390,7 +394,7 @@ java
 		}
 ```
 
-Step3：设置对话框AlertDialog::Builder::P的相关属性setIconAttribute、setTitle、setMessage、set***Button
+- Step3：设置对话框AlertDialog.Builder.P的相关属性setIconAttribute、setTitle、setMessage、set***Button
 
 ```
 java
@@ -460,7 +464,7 @@ java
 ```
 上面的api只是对属性的简单赋值，并将自身返回。
 
-Step4：创建 create()**[AlertDialog::Builder::create()]**
+- Step4：创建 AlertDialog.Builder.create()
 
 创建是最核心的移步，先上代码：
 
@@ -484,7 +488,7 @@ java
 
 ```
 
-Step5：AlertDialog构造
+- Step5：AlertDialog构造
 
 ```
 java
@@ -499,7 +503,7 @@ java
 
 ```
 
-Step6：AlertController构造
+- Step6：AlertController构造
 
 ```
 java
@@ -532,7 +536,7 @@ java
 
 在AlertController构造里面主要完成了对mWindow、mDialogInterface、mHandle的初始化；另外一个重要的工作就是完成了Layout根据应用的主题进行赋值。
 
-Step7：调用**apply**完成AlertParams到AlertController的转换
+- Step7：调用**apply**完成AlertParams到AlertController的转换
 
 
 ```
@@ -597,7 +601,7 @@ java
 apply函数里面仅仅是将AlertParams里面的数据通过AlertController的api调用设置到了AlertController里面。
 
 
-Step8：显示对话框 show()**[AlertDialog::Builder::show()]**
+- Step8：显示对话框 show()**[AlertDialog::Builder::show()]**
 
 ```
 java
@@ -624,7 +628,7 @@ java
 ```
 在OnCreate里面执行了一个很重要的步骤：mAlert.installContent();完成对AlertController的显示内容准备工作。
 
-Step9：准备显示内容 AlertController::installContent()
+- Step9：准备显示内容 AlertController::installContent()
 
 >整个过程也是通过这一步完成显示内容view的Inflater和view的排版调整，之前的都是数据的准备。
 
